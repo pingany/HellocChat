@@ -1,0 +1,97 @@
+package helloc.protocol;
+
+option java_package = "helloc.protocol";
+option java_multiple_files = true;
+
+message Message
+{
+	enum Type
+	{
+		LOGIN_REQ = 1;
+		GET_FRIENDS = 2;
+		FRIENDS_LIST = 3;
+		CHAT = 4;
+		LOGOUT = 6;
+		RESPONSE = 7;
+		LOGIN_RESPONSE = 8;
+	}
+
+	enum Status
+	{
+		OK = 1;
+		USERNAME_PASSWORD_NOT_MATCH = 2;
+		FAILED = 3; // Operation failed
+		ERROR = 4; // Error occurs
+	}
+
+	message Response
+	{
+		required uint32 rspId = 1;
+		optional Status status = 2 [ default = OK ]; 
+	}
+
+	message Login
+	{
+		required string username = 1;
+		required string password = 2;
+	}
+
+	message LoginResponse
+	{
+		optional uint32 userid = 1;
+		required Status status = 2 [ default = OK ]; 
+	}
+
+	message GetFriends
+	{
+		enum GET_FRIENDS_OPTION
+		{
+			ALL = 1;
+			ONLINE_ONLY = 2;
+		}
+		optional GET_FRIENDS_OPTION option = 1 [ default = ALL ];
+	}
+
+	enum OnlineStatus
+	{
+		ONLINE = 1;
+		OFFLINE = 2;
+	}
+
+	message Friend
+	{
+		required uint32 userid = 1;
+		optional OnlineStatus online_status = 2 [ default = OFFLINE ];
+		optional string username = 3; 
+	}
+
+	message FriendsList
+	{
+		repeated Friend friends = 1;
+	}
+	
+	message Chat
+	{
+		enum Type
+		{
+			TEXT = 1;
+			FILE = 2;
+			AUDIO_RECORD = 3;
+		}
+		optional Type type = 1 [ default = TEXT ];
+		optional uint32 userid = 4;
+		optional bool readed = 5 [ default = false ]; //already readed
+		required uint32 peer_id = 2;
+		optional bytes data = 3;
+		optional string filename = 6;
+	}
+
+	required Type type = 1;
+	required uint32 id = 2;
+	optional Response response = 3;
+	optional Login login = 4;
+	optional GetFriends get_friends = 5;
+	optional FriendsList friends_list = 6;
+	optional Chat chat = 7;
+	optional LoginResponse login_response = 9;
+}
