@@ -44,20 +44,10 @@ public class HellocApplication extends Application
 
 		messageHandler = new Handler();
 
-		client = new HellocClient();
+		client = HellocClient.open(this);
+		client.setStorage(new HellocAndroidStorage(this));
 		client.addOnlineStatusChangedListener(this);
 		client.addChatMessageListener(this);
-		client.setAsyncMessagePoster(this);
-
-		client.startLooper();
-		try
-		{
-			client.createConnection();
-		} catch (IOException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
 	public HellocClient getClient()

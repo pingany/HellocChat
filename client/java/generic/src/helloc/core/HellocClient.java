@@ -34,6 +34,7 @@ public class HellocClient implements HellocConnection.ConnectionListener
     int userid = -1;
 
     AsyncMessagePoster asyncMessagePoster;
+    HellocStorage storage;
 
     public void setAsyncMessagePoster(AsyncMessagePoster h)
     {
@@ -42,7 +43,7 @@ public class HellocClient implements HellocConnection.ConnectionListener
             con.setAsyncMessagePoster(h);
     }
 
-    int getUserid()
+    public int getUserid()
     {
         return userid;
     }
@@ -92,7 +93,7 @@ public class HellocClient implements HellocConnection.ConnectionListener
         void chatMessageReceived(Friend f, Message msg);
     }
 
-    public HellocClient()
+    protected HellocClient()
     {
         try
         {
@@ -102,6 +103,37 @@ public class HellocClient implements HellocConnection.ConnectionListener
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    public static HellocClient open(AsyncMessagePoster poster)
+    {
+        HellocClient client = new HellocClient();
+        client.setAsyncMessagePoster(poster);
+        client.startLooper();
+        try
+        {
+            client.createConnection();
+        } catch (IOException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return client;
+    }
+
+    public void setStorage(HellocStorage storage)
+    {
+        this.storage = storage;
+    }
+
+    void save()
+    {
+        assert storage != null;
+    }
+
+    void load()
+    {
+        assert storage != null;
     }
 
     Message.OnlineStatus getOnlineStatus()
@@ -157,6 +189,12 @@ public class HellocClient implements HellocConnection.ConnectionListener
     void joinLooper()
     {
         looper.join();
+    }
+
+    public void close()
+    {
+        if (null != storage)
+            storage.close();
     }
 
     public void createConnection() throws IOException
@@ -311,6 +349,7 @@ public class HellocClient implements HellocConnection.ConnectionListener
                 .setChat(
                         Message.Chat.newBuilder()
                                 .setType(Message.Chat.Type.TEXT)
+                                .setUserid(getUserid())
                                 .setPeerId(userid)
                                 .setData(ByteString.copyFromUtf8(text)))
                 .build();

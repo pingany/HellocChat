@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="hello">Hello World, FriendsListActivity!</string>
+    <string name="hello">Hello C!</string>
     <string name="app_name">Helloc</string>
     <string name="text_message_to_send">Text Message To Send</string>
+    <string name="input_username_here">Input username here</string>
+    <string name="input_password_here">Input password here</string>
+    <string name="login">Login</string>
+    <string name="register_account">Register account</string>
 
 </resources>

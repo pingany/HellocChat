@@ -84,9 +84,10 @@ public class ChatActivity extends GenericActivity
 
 		chatItems = new Vector<ChatItem>();
 		List<Message> msgs = client.findChatsByFriendId(friendId);
+		int userId = client.getUserid();
 		for (Message m : msgs)
 		{
-			boolean sentFromMe = !m.getChat().hasUserid();
+			boolean sentFromMe = !m.getChat().hasUserid() || m.getChat().getUserid() == userId;
 			chatItems.add(new ChatItem(client, m, sentFromMe));
 		}
 		chatListAdapter = new ChatListAdapter(this, chatItems);
