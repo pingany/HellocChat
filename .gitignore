@@ -1,0 +1,14 @@
+bin/
+gen/
+.metaclass
+.metadata
+*.bak
+Message.java
+MessageOrBuilder.java
+Messages.java
+*.pyc
+*.pyo
+*.class
+messages_pb2.py
+*.sublime-project
+*.sublime-workspace
