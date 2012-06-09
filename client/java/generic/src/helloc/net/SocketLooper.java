@@ -59,6 +59,21 @@ public class SocketLooper implements Runnable
             l.handleConnected();
     }
 
+    void removeConnection(final Listener l, SocketChannel sc)
+    {
+        listeners.remove(l);
+        try
+        {
+            SelectionKey key = sc.keyFor(stor);
+            key.cancel();
+            sc.close();
+        } catch (Exception e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
     void enableDetectingWritable(final SocketChannel sc, final Listener l, final boolean enable)
     {
         // synchronized (this)
@@ -156,6 +171,8 @@ public class SocketLooper implements Runnable
             }
             if (channelNum > 0)
             {
+                try
+                {
                 final Iterator<SelectionKey> it = stor.selectedKeys().iterator();
                 while (it.hasNext())
                 {
@@ -175,7 +192,6 @@ public class SocketLooper implements Runnable
                                 connected = sc.finishConnect();
                             } catch (final IOException e)
                             {
-                                listener.handleError(e, "Finish connect error");
                                 e.printStackTrace();
                             }
                         }
@@ -184,30 +200,33 @@ public class SocketLooper implements Runnable
                             assert sc.isConnected();
                             listener.handleConnected();
                         }
+                            else
+                            {
+                                listener.handleError(null, "Finish connect error");
+                            }
                     }
-                    if (key.isReadable())
+                        /* Maybe key is cancelled on above operation*/
+                        if (key.isValid() && key.isReadable() && sc.isConnected())
                     {
-
                         Logger.i("Readable");
-                        assert sc.isConnected();
                         try
                         {
                             listener.handleRead();
-                        } catch (final IOException e)
+                            } catch (final Exception e)
                         {
                             listener
                                     .handleError(e, "listener.handleRead error");
                             e.printStackTrace();
                         }
                     }
-                    if (key.isWritable())
+                        /* Maybe key is cancelled on above operation*/
+                        if (key.isValid() && key.isWritable() && sc.isConnected())
                     {
                         Logger.i("Writable");
-                        assert sc.isConnected();
                         try
                         {
                             listener.handleWrite();
-                        } catch (final IOException e)
+                            } catch (final Exception e)
                         {
                             listener.handleError(e,
                                     "listener.handleWrite error");
@@ -223,6 +242,11 @@ public class SocketLooper implements Runnable
 						}
                     }
                     it.remove();
+                }
+                } catch (Exception e)
+                {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
                 }
             }
         }

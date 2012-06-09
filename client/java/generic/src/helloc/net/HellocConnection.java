@@ -67,6 +67,16 @@ public class HellocConnection implements SocketLooper.Listener
             removeRange(0, i);
         }
 
+        synchronized void insertAtFront(ByteBuffer buffer)
+        {
+            removeSent();
+            /* insert the message at front, but skip messages which have been sent partly. */
+            int i = 0, len = size();
+            while (i < len && get(i).position() > 0)
+                ++i;
+            insertElementAt(buffer, i);
+        }
+
         @Override
         public synchronized boolean add(ByteBuffer buffer)
         {
@@ -156,6 +166,10 @@ public class HellocConnection implements SocketLooper.Listener
     SendBuf sendbuf = new SendBuf();
     RecvBuffer recvbuf = null;
 
+    static final int MAX_CONNECT_RETRIES = 5;   
+    int triedBeforeConnected = 0;
+    /* Remember the login message client sent before, resent it after reconnect server. */
+    Message loginMsg;
     AsyncMessagePoster asyncMessagePoster;
 
     public HellocConnection(SocketLooper looper, ConnectionListener listener,
@@ -165,7 +179,23 @@ public class HellocConnection implements SocketLooper.Listener
         this.listener = listener;
         this.host = host;
         this.port = port;
+        reconnectServer();
+    }
+
+    public void reconnectServer() throws IOException
+    {
+        if(triedBeforeConnected > MAX_CONNECT_RETRIES)
+        {
+            return;
+        }
+        triedBeforeConnected++;
+        if (sc != null)
+        {
+            looper.removeConnection(this, sc);
+        }
         looper.addConnection(this, host, port);
+        if(loginMsg != null)
+            sendMessage(loginMsg);
     }
 
     public void setAsyncMessagePoster(AsyncMessagePoster h)
@@ -183,7 +213,7 @@ public class HellocConnection implements SocketLooper.Listener
                 {
                     listener.handleSocketClosed();
                 }
-            });
+            }, 0);
         }
         else
         {
@@ -201,7 +231,7 @@ public class HellocConnection implements SocketLooper.Listener
                 {
                     listener.handleMessage(msg);
                 }
-            });
+            }, 0);
         }
         else
         {
@@ -236,12 +266,22 @@ public class HellocConnection implements SocketLooper.Listener
         byte[] bwithlen = new byte[b.length + 4];
         writeInteger(b.length, bwithlen, 0, 4);
         System.arraycopy(b, 0, bwithlen, 4, b.length);
-        sendbuf.add(ByteBuffer.wrap(bwithlen));
+        ByteBuffer bb = ByteBuffer.wrap(bwithlen);
+        if (msg.getType() == Message.Type.LOGIN_REQ)
+        {
+            loginMsg = msg;
+            sendbuf.insertAtFront(bb);
+        }
+        else    
+        {
+            /* Normal messages */
+            sendbuf.add(bb);
+        }
     }
 
     public void handleConnected()
     {
-        // FIXE
+        triedBeforeConnected = 0;
     }
 
     public void handleRead() throws IOException
@@ -251,6 +291,7 @@ public class HellocConnection implements SocketLooper.Listener
             ; // Currently recv data until we can't read
     }
 
+    /* following functions are running in socket looper thread. */
     public void handleWrite() throws IOException
     {
         synchronized (sendbuf)
@@ -286,6 +327,24 @@ public class HellocConnection implements SocketLooper.Listener
         Logger.w(String.format(
                 "HellocConnection.handleError called e:%s, msg:%s", e, msg));
         handleClose();
+        if(asyncMessagePoster != null)
+        {
+            asyncMessagePoster.postAsyncMessage(new Runnable()
+            {
+                public void run()
+                {
+                    try
+                            {
+                                reconnectServer();
+                            } catch (IOException e1)
+                            {
+                                // TODO Auto-generated catch block
+                                e1.printStackTrace();
+                            }
+                }
+            }, 1000 * 30);
+        }
+
     }
 
     public void socketCreated(SocketChannel sc)

@@ -143,7 +143,12 @@ public class HellocClient implements HellocConnection.ConnectionListener
 
     void setOnlineStatus(Message.OnlineStatus s)
     {
+        if(s == currentStatus)
+            return;
+        Message.OnlineStatus oldStatus = currentStatus;
         currentStatus = s;
+        for (OnlineStatusListener l : onlineStatuslistener)
+            l.statusChanged(oldStatus, s);
     }
 
     public void addOnlineStatusChangedListener(OnlineStatusListener l)
@@ -224,12 +229,8 @@ public class HellocClient implements HellocConnection.ConnectionListener
 
                     if (status == Message.Status.OK)
                     {
-                        Message.OnlineStatus oldStatus = getOnlineStatus();
                         setUserid(msg.getLoginResponse().getUserid());
-                        setOnlineStatus(Message.OnlineStatus.OFFLINE);
-                        for (OnlineStatusListener l : onlineStatuslistener)
-                            l.statusChanged(oldStatus,
-                                    Message.OnlineStatus.ONLINE);
+                        setOnlineStatus(Message.OnlineStatus.ONLINE);
                     } else
                     {
                         for (OnlineStatusListener l : onlineStatuslistener)
@@ -316,6 +317,7 @@ public class HellocClient implements HellocConnection.ConnectionListener
     public void handleSocketClosed()
     {
         Logger.i("HellocClient: socket closed");
+        setOnlineStatus(Message.OnlineStatus.OFFLINE);
     }
 
     public void login(String username, String password)

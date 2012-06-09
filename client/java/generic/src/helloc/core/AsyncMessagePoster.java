@@ -2,5 +2,5 @@ package helloc.core;
 
 public interface AsyncMessagePoster
 {
-	void postAsyncMessage(Runnable runnable);
+	void postAsyncMessage(Runnable runnable, int delayInMilliseconds);
 }

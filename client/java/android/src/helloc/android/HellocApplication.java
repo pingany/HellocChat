@@ -106,16 +106,15 @@ public class HellocApplication extends Application
 		}
 	}
 
-	public void postAsyncMessage(Runnable runnable)
+	public void postAsyncMessage(Runnable runnable, int delayInMilliseconds)
 	{
-		messageHandler.post(runnable);
+		messageHandler.postDelayed(runnable, delayInMilliseconds);
 	}
 
 	@Override
 	public void chatMessageSent(Friend f, Message msg)
 	{
-		// TODO Auto-generated method stub
-
+		// Do nothing
 	}
 
 }
