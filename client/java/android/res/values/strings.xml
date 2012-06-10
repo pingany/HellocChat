@@ -8,5 +8,6 @@
     <string name="input_password_here">Input password here</string>
     <string name="login">Login</string>
     <string name="register_account">Register account</string>
+    <string name="autologin_nexttime">Auto login next time</string>
 
 </resources>

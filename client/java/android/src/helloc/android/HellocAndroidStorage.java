@@ -8,9 +8,11 @@ import java.util.List;
 import java.util.Vector;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
+import android.preference.PreferenceActivity;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
@@ -124,6 +126,35 @@ class HellocAndroidStorage implements HellocStorage
 		cursor.close();
 		assert chats.size() == chats.capacity();
 		return chats;
+	}
+
+	private SharedPreferences getPrefs() {
+        return context.getSharedPreferences("helloc", PreferenceActivity.MODE_PRIVATE);
+    }
+
+	@Override
+	public void saveDefaultAccount(Account account)
+	{
+		//FIXME, encryption here.
+		SharedPreferences.Editor editor = getPrefs().edit();
+		editor.putString("default_username", account.username);
+		editor.putString("default_password", account.password);
+		editor.putBoolean("default_autologin", account.autoLogin);
+		editor.commit();
+	}
+
+	@Override
+	public Account loadDefaultAccount()
+	{
+		//FIXME, encryption here.
+		SharedPreferences refs = getPrefs();
+		Account account = new Account();
+		account.username = refs.getString("default_username", "");
+		if (account.username.equals(""))
+			return null;
+		account.password = refs.getString("default_password", "");
+		account.autoLogin = refs.getBoolean("default_autologin", false);
+		return account;
 	}
 
 }

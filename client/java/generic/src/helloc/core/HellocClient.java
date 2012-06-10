@@ -36,6 +36,19 @@ public class HellocClient implements HellocConnection.ConnectionListener
     AsyncMessagePoster asyncMessagePoster;
     HellocStorage storage;
 
+    String appDir = "/";
+
+    public void setAppDir(String appDir)
+    {
+        assert appDir.endsWith("/");
+        this.appDir = appDir;
+    }
+
+    String getPath(String filename)
+    {
+        return appDir + filename;
+    }
+
     public void setAsyncMessagePoster(AsyncMessagePoster h)
     {
         asyncMessagePoster = h;
@@ -124,6 +137,11 @@ public class HellocClient implements HellocConnection.ConnectionListener
     public void setStorage(HellocStorage storage)
     {
         this.storage = storage;
+    }
+
+    public HellocStorage getStorage()
+    {
+        return storage;
     }
 
     void save()

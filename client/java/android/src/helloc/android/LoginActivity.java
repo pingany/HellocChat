@@ -8,12 +8,15 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnKeyListener;
+import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
@@ -27,16 +30,22 @@ public class LoginActivity extends GenericActivity
 {
 
 	EditText usernameEditor, passwordEditor;
+	ProgressBar loginProgressBar;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		client.addOnlineStatusChangedListener(this);
+
+    	requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+
 		setContentView(R.layout.login);
 
 		usernameEditor = (EditText) findViewById(R.id.usernameEditor);
 		passwordEditor = (EditText) findViewById(R.id.passwordEditor);
+		loginProgressBar = (ProgressBar) findViewById(R.id.loginProgressBar);
+		loginProgressBar.setIndeterminate(true);
 
 		OnKeyListener keyListener = new OnKeyListener()
 		{
@@ -82,6 +91,7 @@ public class LoginActivity extends GenericActivity
 		passwordEditor.setImeOptions(EditorInfo.IME_ACTION_DONE);
 		passwordEditor.setOnEditorActionListener(editorActionListener);
 
+		loadDefaultAccont();
 	}
 
 	public void onLogin(View view)
@@ -92,6 +102,17 @@ public class LoginActivity extends GenericActivity
 	public void onRegisterAccount(View view)
 	{
 		registerAccount();
+	}
+
+	void loadDefaultAccont()
+	{
+		HellocStorage.Account account = client.getStorage().loadDefaultAccount();
+		if (account == null)
+			return;
+		usernameEditor.setText(account.username);
+		passwordEditor.setText(account.password);
+		if(account.autoLogin)
+			login();
 	}
 
 	void login()
@@ -109,6 +130,7 @@ public class LoginActivity extends GenericActivity
 			client.login(username, password);
 			client.fetchFriends();
 			client.sendChat(1, "Hello, I am from android");
+			loginProgressBar.setVisibility(View.VISIBLE);
 		}
 	}
 
@@ -119,6 +141,7 @@ public class LoginActivity extends GenericActivity
 
 	public void loginFailed(Message.Status status)
 	{
+		loginProgressBar.setVisibility(View.GONE);
 		showDialog(GenericActivity.DIALOG_YES_NO_MESSAGE);
 	}
 
@@ -127,6 +150,15 @@ public class LoginActivity extends GenericActivity
 	{
 		if (newStatus == Message.OnlineStatus.ONLINE)
 		{
+			loginProgressBar.setVisibility(View.GONE);
+			if(((CheckBox)findViewById(R.id.autoLoginCheckBox)).isChecked())
+			{
+				HellocStorage.Account account = new HellocStorage.Account();
+				account.autoLogin = true;
+				account.username = usernameEditor.getText().toString().trim();
+				account.password = passwordEditor.getText().toString().trim();
+				client.getStorage().saveDefaultAccount(account);
+			}
 			Intent intent = new Intent(this, FriendsListActivity.class);
 			startActivity(intent);
 			this.finish();

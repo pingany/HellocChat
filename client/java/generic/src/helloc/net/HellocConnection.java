@@ -168,6 +168,8 @@ public class HellocConnection implements SocketLooper.Listener
 
     static final int MAX_CONNECT_RETRIES = 5;   
     int triedBeforeConnected = 0;
+    boolean connected = false;
+
     /* Remember the login message client sent before, resent it after reconnect server. */
     Message loginMsg;
     AsyncMessagePoster asyncMessagePoster;
@@ -281,6 +283,7 @@ public class HellocConnection implements SocketLooper.Listener
 
     public void handleConnected()
     {
+        connected = true;
         triedBeforeConnected = 0;
     }
 
@@ -314,6 +317,11 @@ public class HellocConnection implements SocketLooper.Listener
         try
         {
             sc.close();
+            sc = null;
+            connected = false;
+            sendbuf.clear();
+            if (recvbuf != null)
+                recvbuf.clear();
             callSocketClosed();
         } catch (IOException e)
         {
